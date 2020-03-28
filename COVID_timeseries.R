@@ -81,8 +81,8 @@ counties.cent <- geoCounty
 counties.cent$fips <- as.character(counties.cent$fips)
 
 # Load US state map data
-states <- map_data("state")
-states2 <- us_states
+#states <- map_data("state")
+states <- us_states
 
 # Load US map data
 world <- ne_countries(scale = "medium", returnclass = "sf")
@@ -102,12 +102,13 @@ covid.final <- subset(covid.final, select = c("date", "fips", "cases", "lon", "l
 # Create column for cases by county population size 
 covid.final$cases_pop <- covid.final$cases / covid.final$POPESTIMATE2019
 
-#########################################
-### Static maps
+# Remove old dataframes
+rm(census, counties, counties.cent, counties2, covid, covid.counties, world)
 
-# Map of COVID-19 cases by county in the United States
+#########################################
+### Map of COVID-19 cases by county in the United States
 map.covid.cases <- ggplot() +
-  geom_sf(data = states2, fill = "rosybrown1", color = "white", size = 2, alpha = 0.8, mapping = aes(geometry = geometry)) + 
+  geom_sf(data = states, fill = "rosybrown1", color = "white", size = 3, alpha = 0.8, mapping = aes(geometry = geometry)) + 
   geom_point(data = covid.final, shape = 16, alpha = 0.4, color = "red3", aes(x = lon, y = lat, size = cases)) +
   scale_size(range = c(6, 150)) +
   coord_sf(xlim = c(-128, -65), ylim = c(23, 52), expand = FALSE) +
@@ -123,7 +124,7 @@ map.covid.cases <- ggplot() +
         axis.text = element_blank(),
         axis.title = element_blank(),
         legend.position = "none") +
-  labs(title = "Confirmed cases of COVID-19 in the United States", subtitle = "{current_frame}") +
+  labs(title = "Confirmed cases of COVID-19 by county in the United States", subtitle = "{current_frame}") +
   transition_manual(date, cumulative = TRUE) +
   ease_aes('linear') +
   enter_fade() +
@@ -133,6 +134,36 @@ map.covid.cases <- ggplot() +
 animate(map.covid.cases, duration = 15, fps = 5, end_pause = 10, height = 2100, width = 4000)
 
 # Save animation
-anim_save("covid_20200327.gif", animation = last_animation())
+anim_save("covid_county_20200327.gif", animation = last_animation())
+
+# Map of COVID-19 cases by county population size in the United States
+map.covid.pop <- ggplot() +
+  geom_sf(data = states, fill = "rosybrown1", color = "white", size = 3, alpha = 0.8, mapping = aes(geometry = geometry)) + 
+  geom_point(data = covid.final, shape = 16, alpha = 0.4, color = "red3", aes(x = lon, y = lat, size = cases_pop)) +
+  scale_size(range = c(3, 40)) +
+  coord_sf(xlim = c(-128, -65), ylim = c(23, 52), expand = FALSE) +
+  theme(plot.title = element_text(hjust = 0.5, face =, "bold", size = 120, margin = margin(0, 0, 15, 0), color = "black", family = "Times"),
+        plot.subtitle = element_text(hjust = 0.5, size = 110, margin = margin(0, 0, -5, 0), color = "black", family = "Times"),
+        plot.background = element_rect(fill = 'white', color = 'white'),
+        plot.margin = unit(c(1, 1, 1, 1), "cm"),
+        panel.background = element_rect(fill = "white"),
+        panel.border = element_rect(color = "white", fill = "NA"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "none") +
+  labs(title = "Confirmed cases of COVID-19 by county population size in the United States", subtitle = "{current_frame}\n Data from the New York Times.") +
+  transition_manual(date, cumulative = TRUE) +
+  ease_aes('linear') +
+  enter_fade() +
+  exit_fade()
+
+# Set animation settings
+animate(map.covid.pop, duration = 15, fps = 5, end_pause = 10, height = 2100, width = 4000)
+
+# Save animation
+anim_save("covid_population_20200328.gif", animation = last_animation())
 
 
